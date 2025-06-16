@@ -1,5 +1,4 @@
-ccxt
-PyQt5
 matplotlib
 mplfinance
 pandas
+requests
