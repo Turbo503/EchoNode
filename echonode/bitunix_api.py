@@ -16,9 +16,6 @@ from typing import Any, Dict, List
 BASE = "https://openapi.bitunix.com"  # REST host
 API_KEY = os.getenv("BITUNIX_KEY")
 API_SECRET = os.getenv("BITUNIX_SECRET")
-if not API_KEY or not API_SECRET:
-    raise EnvironmentError("Set BITUNIX_KEY / BITUNIX_SECRET env vars")
-
 HEADERS = {"Content-Type": "application/json"}
 
 # --- internal helpers ------------------------------------------
@@ -28,6 +25,9 @@ def _sign(query: str) -> str:
 
 
 def _auth_headers(query: str) -> Dict[str, str]:
+    if not API_KEY or not API_SECRET:
+        raise EnvironmentError("Set BITUNIX_KEY and BITUNIX_SECRET")
+
     h = HEADERS.copy()
     h["X-API-KEY"] = API_KEY
     h["X-SIGNATURE"] = _sign(query)

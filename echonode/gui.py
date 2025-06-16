@@ -70,6 +70,13 @@ class CandlestickCanvas(FigureCanvas):
         self.indicators_enabled[name] = state
         self.redraw()
 
+        # load_data may be called from worker threads via the signal
+        self.data_loaded.connect(self.load_data)
+
+    def set_indicator_state(self, name: str, state: bool):
+        self.indicators_enabled[name] = state
+        self.redraw()
+
     def load_data(self, df: pd.DataFrame):
         self._data = df
         # pre-compute indicator data
@@ -138,6 +145,7 @@ class MainWindow(QtWidgets.QWidget):
         self.buy_button.clicked.connect(lambda: self.place_order("buy"))
         self.sell_button.clicked.connect(lambda: self.place_order("sell"))
 
+        self.update_thread: threading.Thread | None = None
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_chart)
         self.timer.start(60_000)  # update every minute
@@ -169,17 +177,28 @@ class MainWindow(QtWidgets.QWidget):
         return df
 
     def update_chart(self):
-        def task():
-            print("Starting chart update")
-            df = self.fetch_data()
-            path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
-            df.to_csv(path)
-            print("Saved CSV to", path)
-            # emit the data so the canvas loads it on the GUI thread
-            self.canvas.data_loaded.emit(df)
+        if self.update_thread and self.update_thread.is_alive():
+            print("Update already in progress")
+            return
 
-            print("Queued data for drawing")
-        threading.Thread(target=task, daemon=True).start()
+        def task():
+            try:
+                print("Starting chart update")
+                df = self.fetch_data()
+                path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
+                df.to_csv(path)
+                print("Saved CSV to", path)
+                # emit the data so the canvas loads it on the GUI thread
+                self.canvas.data_loaded.emit(df)
+                print("Queued data for drawing")
+            except Exception as exc:
+                print("Error updating chart:", exc)
+            finally:
+                self.update_thread = None
+
+        self.update_thread = threading.Thread(target=task, daemon=True)
+        self.update_thread.start()
+
 
     def place_order(self, side: str):
         ex = self._get_exchange()
