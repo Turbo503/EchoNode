@@ -102,6 +102,7 @@ class CandlestickCanvas(FigureCanvas):
         self.draw_idle()
 
 
+
 class MainWindow(QtWidgets.QWidget):
     """Main application window."""
 
