@@ -95,7 +95,7 @@ class CandlestickCanvas(FigureCanvas):
         # set_xdata/ydata require a sequence so supply two identical points
         self._crosshair_v.set_xdata([event.xdata, event.xdata])
         self._crosshair_h.set_ydata([event.ydata, event.ydata])
-        self.draw_idle()
+
 
 
 class MainWindow(QtWidgets.QWidget):
