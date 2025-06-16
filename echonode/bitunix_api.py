@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------
 # Thin, ccxt-style REST adapter for Bitunix spot market.
 # Only the endpoints EchoNode needs: klines, depth, market & limit orders.
+# API credentials are optional for public endpoints.
+
 # ---------------------------------------------------------------
 from __future__ import annotations
 
@@ -27,7 +29,6 @@ def _sign(query: str) -> str:
 def _auth_headers(query: str) -> Dict[str, str]:
     if not API_KEY or not API_SECRET:
         raise EnvironmentError("Set BITUNIX_KEY and BITUNIX_SECRET")
-
     h = HEADERS.copy()
     h["X-API-KEY"] = API_KEY
     h["X-SIGNATURE"] = _sign(query)

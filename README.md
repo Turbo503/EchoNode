@@ -6,7 +6,7 @@ EchoNode is a cross‑platform desktop trading application inspired by TradingVi
 * Real‑time candlestick chart with pan, zoom and crosshair.
 * Buy/Sell buttons for immediate market orders.
 * API credentials loaded from `BITUNIX_KEY` and `BITUNIX_SECRET` environment variables.
-* Works on Windows, macOS and Linux using **PyQt5**.
+* Works on Windows, macOS and Linux using the built-in **Tkinter** GUI toolkit.
 * Hooks for future machine learning models (TCN/TFT/PPO) to generate trading signals.
 
 ## Requirements
