@@ -5,7 +5,6 @@ import threading
 from pathlib import Path
 
 import pandas as pd
-import ccxt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
