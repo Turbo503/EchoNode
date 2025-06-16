@@ -90,6 +90,8 @@ class CandlestickCanvas(FigureCanvas):
     def on_mouse_move(self, event):
         if event.inaxes != self.ax:
             return
+        if event.xdata is None or event.ydata is None:
+            return
         self._crosshair_v.set_xdata(event.xdata)
         self._crosshair_h.set_ydata(event.ydata)
         self.draw_idle()
