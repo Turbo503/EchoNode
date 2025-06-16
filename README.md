@@ -1,6 +1,6 @@
 # EchoNode
 
-EchoNode is a cross‑platform desktop trading application inspired by TradingView. It fetches market data from the Bitunix exchange and displays real‑time candlestick charts. You can place live orders directly from the interface using the Bitunix REST API via **ccxt**.
+EchoNode is a cross‑platform desktop trading application inspired by TradingView. It fetches market data from the Bitunix exchange and displays real‑time candlestick charts. A small custom wrapper handles authenticated calls to the Bitunix REST API.
 
 ## Features
 * Real‑time candlestick chart with pan, zoom and crosshair.
