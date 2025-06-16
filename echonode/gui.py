@@ -92,9 +92,10 @@ class CandlestickCanvas(FigureCanvas):
             return
         if event.xdata is None or event.ydata is None:
             return
-        self._crosshair_v.set_xdata(event.xdata)
-        self._crosshair_h.set_ydata(event.ydata)
-        self.draw_idle()
+        # set_xdata/ydata require a sequence so supply two identical points
+        self._crosshair_v.set_xdata([event.xdata, event.xdata])
+        self._crosshair_h.set_ydata([event.ydata, event.ydata])
+
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -145,21 +146,31 @@ class MainWindow(QtWidgets.QWidget):
         return self.exchange
 
     def fetch_data(self) -> pd.DataFrame:
+        print("Fetching OHLCV for", self.symbol)
         ex = self._get_exchange()
         ohlcv = ex.fetch_ohlcv(self.symbol, timeframe=self.timeframe, limit=200)
-        df = pd.DataFrame(ohlcv, columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"])
+        df = pd.DataFrame(
+            ohlcv,
+            columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"],
+        )
         df["Date"] = pd.to_datetime(df["Timestamp"], unit="ms")
         df.set_index("Date", inplace=True)
         df = df[["Open", "High", "Low", "Close", "Volume"]]
+        print("Fetched", len(df), "rows")
         return df
 
     def update_chart(self):
         def task():
+            print("Starting chart update")
             df = self.fetch_data()
             path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
             df.to_csv(path)
+            print("Saved CSV to", path)
             # load data on the main thread since Matplotlib isn't thread safe
-            QtCore.QTimer.singleShot(0, lambda df=df: self.canvas.load_data(df))
+            QtCore.QTimer.singleShot(
+                0, lambda df=df: self.canvas.load_data(df)
+            )
+            print("Queued data for drawing")
         threading.Thread(target=task, daemon=True).start()
 
     def place_order(self, side: str):
