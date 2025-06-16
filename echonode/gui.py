@@ -75,6 +75,7 @@ class CandlestickCanvas(FigureCanvas):
     def redraw(self):
         self.ax.clear()
         if not self._data.empty:
+            print("Redrawing chart with", len(self._data), "rows")
             mpf.plot(self._data, type="candle", ax=self.ax, datetime_format="%H:%M")
             if self.indicators_enabled.get("Divergence"):
                 div = self.indicator_data.get("Divergence")
@@ -85,6 +86,9 @@ class CandlestickCanvas(FigureCanvas):
                         self.ax.scatter(bulls.index, bulls.values, marker="^", color="green", zorder=5)
                     if not bears.empty:
                         self.ax.scatter(bears.index, bears.values, marker="v", color="red", zorder=5)
+        # recreate crosshair lines so they persist after clearing
+        self._crosshair_v = self.ax.axvline(color="gray", lw=0.5, ls="--")
+        self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
         self.draw()
 
     def on_mouse_move(self, event):
@@ -95,6 +99,7 @@ class CandlestickCanvas(FigureCanvas):
         # set_xdata/ydata require a sequence so supply two identical points
         self._crosshair_v.set_xdata([event.xdata, event.xdata])
         self._crosshair_h.set_ydata([event.ydata, event.ydata])
+        self.draw_idle()
 
 
 
