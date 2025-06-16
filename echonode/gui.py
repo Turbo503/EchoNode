@@ -63,6 +63,12 @@ class CandlestickCanvas(FigureCanvas):
         self.mpl_connect("motion_notify_event", self.on_mouse_move)
         self._crosshair_v = self.ax.axvline(color="gray", lw=0.5, ls="--")
         self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
+        # load_data may be called from worker threads via the signal
+        self.data_loaded.connect(self.load_data)
+
+    def set_indicator_state(self, name: str, state: bool):
+        self.indicators_enabled[name] = state
+        self.redraw()
 
         # load_data may be called from worker threads via the signal
         self.data_loaded.connect(self.load_data)
@@ -105,6 +111,7 @@ class CandlestickCanvas(FigureCanvas):
         self._crosshair_v.set_xdata([event.xdata, event.xdata])
         self._crosshair_h.set_ydata([event.ydata, event.ydata])
         self.draw_idle()
+
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -191,6 +198,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.update_thread = threading.Thread(target=task, daemon=True)
         self.update_thread.start()
+
 
     def place_order(self, side: str):
         ex = self._get_exchange()
