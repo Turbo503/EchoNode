@@ -15,6 +15,36 @@ import mplfinance as mpf
 from .trading import get_exchange, place_order
 from .indicators import compute_divergence
 
+class IndicatorPopup(QtWidgets.QListWidget):
+    """Popup list for toggling indicators."""
+
+    toggled = QtCore.pyqtSignal(str, bool)
+
+    def __init__(self, indicators: list[str]):
+        super().__init__()
+        self.setWindowFlags(QtCore.Qt.Popup)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        for name in indicators:
+            item = QtWidgets.QListWidgetItem(name)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.addItem(item)
+
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        item = self.itemAt(event.pos())
+        if item is not None:
+            checked = item.checkState() == QtCore.Qt.Checked
+            item.setCheckState(QtCore.Qt.Unchecked if checked else QtCore.Qt.Checked)
+            self.toggled.emit(item.text(), not checked)
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def focusOutEvent(self, event: QtGui.QFocusEvent):
+        self.hide()
+        super().focusOutEvent(event)
+
+
 DATA_DIR = Path(__file__).resolve().parent / "data" / "ohlcv_data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -64,6 +94,19 @@ class CandlestickCanvas:
         self.indicators_enabled: dict[str, bool] = {"Divergence": False}
         self._crosshair_v = self.ax.axvline(color="gray", lw=0.5, ls="--")
         self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
+        # load_data may be called from worker threads via the signal
+        self.data_loaded.connect(self.load_data)
+
+    def set_indicator_state(self, name: str, state: bool):
+        self.indicators_enabled[name] = state
+        self.redraw()
+
+        # load_data may be called from worker threads via the signal
+        self.data_loaded.connect(self.load_data)
+
+    def set_indicator_state(self, name: str, state: bool):
+        self.indicators_enabled[name] = state
+        self.redraw()
 
     def set_indicator_state(self, name: str, state: bool):
         self.indicators_enabled[name] = state
@@ -84,6 +127,7 @@ class CandlestickCanvas:
                 ax=self.ax,
                 datetime_format="%H:%M",
             )
+
             if self.indicators_enabled.get("Divergence"):
                 div = self.indicator_data.get("Divergence")
                 if div is not None:
@@ -109,6 +153,7 @@ class CandlestickCanvas:
         self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
         self.canvas.draw_idle()
 
+
     def on_mouse_move(self, event):
         if event.inaxes != self.ax:
             return
@@ -133,7 +178,6 @@ class MainWindow(tk.Tk):
         self.update_thread: threading.Thread | None = None
 
         self.canvas = CandlestickCanvas(self)
-
         btn_frame = ttk.Frame(self)
         btn_frame.pack(fill="x")
         self.buy_button = ttk.Button(btn_frame, text="Buy", command=lambda: self.place_order("buy"))
@@ -148,10 +192,16 @@ class MainWindow(tk.Tk):
         self.update_interval_ms = 60_000
         self.after(0, self.update_chart)
 
+
     def show_indicator_popup(self):
         x = self.indicator_button.winfo_rootx()
         y = self.indicator_button.winfo_rooty() + self.indicator_button.winfo_height()
         self.indicator_popup.show_at(x, y)
+
+    def show_indicator_popup(self):
+        pos = self.indicator_button.mapToGlobal(QtCore.QPoint(0, self.indicator_button.height()))
+        self.indicator_popup.move(pos)
+        self.indicator_popup.show()
 
     def _get_exchange(self):
         if self.exchange is None:
@@ -176,6 +226,7 @@ class MainWindow(tk.Tk):
         if self.update_thread and self.update_thread.is_alive():
             print("Update already in progress")
             self.after(self.update_interval_ms, self.update_chart)
+
             return
 
         def task():
@@ -186,6 +237,7 @@ class MainWindow(tk.Tk):
                 df.to_csv(path)
                 print("Saved CSV to", path)
                 self.after(0, lambda: self.canvas.load_data(df))
+
                 print("Queued data for drawing")
             except Exception as exc:
                 print("Error updating chart:", exc)
@@ -195,6 +247,7 @@ class MainWindow(tk.Tk):
         self.update_thread = threading.Thread(target=task, daemon=True)
         self.update_thread.start()
         self.after(self.update_interval_ms, self.update_chart)
+
 
     def place_order(self, side: str):
         ex = self._get_exchange()

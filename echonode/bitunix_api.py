@@ -2,6 +2,7 @@
 # Thin, ccxt-style REST adapter for Bitunix spot market.
 # Only the endpoints EchoNode needs: klines, depth, market & limit orders.
 # API credentials are optional for public endpoints.
+
 # ---------------------------------------------------------------
 from __future__ import annotations
 
@@ -17,7 +18,6 @@ from typing import Any, Dict, List
 BASE = "https://openapi.bitunix.com"  # REST host
 API_KEY = os.getenv("BITUNIX_KEY")
 API_SECRET = os.getenv("BITUNIX_SECRET")
-
 HEADERS = {"Content-Type": "application/json"}
 
 # --- internal helpers ------------------------------------------
