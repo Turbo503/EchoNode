@@ -158,7 +158,8 @@ class MainWindow(QtWidgets.QWidget):
             df = self.fetch_data()
             path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
             df.to_csv(path)
-            QtCore.QMetaObject.invokeMethod(self.canvas, lambda: self.canvas.load_data(df), QtCore.Qt.QueuedConnection)
+            # load data on the main thread since Matplotlib isn't thread safe
+            QtCore.QTimer.singleShot(0, lambda df=df: self.canvas.load_data(df))
         threading.Thread(target=task, daemon=True).start()
 
     def place_order(self, side: str):
