@@ -1,5 +1,7 @@
 """Trading utilities for EchoNode."""
 
+from __future__ import annotations
+
 import os
 import logging
 from typing import Optional
