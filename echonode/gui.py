@@ -64,9 +64,12 @@ class CandlestickCanvas(FigureCanvas):
         self._crosshair_v = self.ax.axvline(color="gray", lw=0.5, ls="--")
         self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
 
+<<<<<<< i6bse0-codex/integrate-divergence.py-with-indicators-dropdown
         # load_data may be called from worker threads via the signal
         self.data_loaded.connect(self.load_data)
 
+=======
+>>>>>>> main
     def set_indicator_state(self, name: str, state: bool):
         self.indicators_enabled[name] = state
         self.redraw()
@@ -105,6 +108,7 @@ class CandlestickCanvas(FigureCanvas):
         self._crosshair_v.set_xdata([event.xdata, event.xdata])
         self._crosshair_h.set_ydata([event.ydata, event.ydata])
         self.draw_idle()
+
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -175,8 +179,15 @@ class MainWindow(QtWidgets.QWidget):
             path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
             df.to_csv(path)
             print("Saved CSV to", path)
+<<<<<<< i6bse0-codex/integrate-divergence.py-with-indicators-dropdown
             # emit the data so the canvas loads it on the GUI thread
             self.canvas.data_loaded.emit(df)
+=======
+            # load data on the main thread since Matplotlib isn't thread safe
+            QtCore.QTimer.singleShot(
+                0, lambda df=df: self.canvas.load_data(df)
+            )
+>>>>>>> main
             print("Queued data for drawing")
         threading.Thread(target=task, daemon=True).start()
 

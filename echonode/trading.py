@@ -1,7 +1,10 @@
 """Trading utilities for EchoNode."""
 
 from __future__ import annotations
+<<<<<<< i6bse0-codex/integrate-divergence.py-with-indicators-dropdown
 
+=======
+>>>>>>> main
 import logging
 import os
 from typing import Optional
