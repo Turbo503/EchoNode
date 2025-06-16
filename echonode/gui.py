@@ -50,6 +50,8 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 class CandlestickCanvas(FigureCanvas):
     """Matplotlib canvas showing candlestick data."""
 
+    data_loaded = QtCore.pyqtSignal(object)
+
     def __init__(self, parent=None):
         self.fig = Figure(tight_layout=True)
         super().__init__(self.fig)
@@ -61,6 +63,8 @@ class CandlestickCanvas(FigureCanvas):
         self.mpl_connect("motion_notify_event", self.on_mouse_move)
         self._crosshair_v = self.ax.axvline(color="gray", lw=0.5, ls="--")
         self._crosshair_h = self.ax.axhline(color="gray", lw=0.5, ls="--")
+        # load_data may be called from worker threads via the signal
+        self.data_loaded.connect(self.load_data)
 
     def set_indicator_state(self, name: str, state: bool):
         self.indicators_enabled[name] = state
@@ -171,10 +175,9 @@ class MainWindow(QtWidgets.QWidget):
             path = DATA_DIR / f"{self.symbol.replace('/', '')}.csv"
             df.to_csv(path)
             print("Saved CSV to", path)
-            # load data on the main thread since Matplotlib isn't thread safe
-            QtCore.QTimer.singleShot(
-                0, lambda df=df: self.canvas.load_data(df)
-            )
+            # emit the data so the canvas loads it on the GUI thread
+            self.canvas.data_loaded.emit(df)
+
             print("Queued data for drawing")
         threading.Thread(target=task, daemon=True).start()
 
